@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 주택연금 수령액 & 상속정산 간편 계산기</title>
+<style>
+  :root {
+    --primary-teal: #0d9488;
+    --primary-dark: #0f766e;
+    --bg-light: #f0fdfa;
+    --card-bg: #ffffff;
+    --text-main: #134e4a;
+    --text-sub: #475569;
+    --border: #ccfbf1;
+    --accent-orange: #ea580c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", sans-serif; }
+  body { background: #f8fafc; padding: 30px 16px; display: flex; justify-content: center; }
+
+  .widget-card {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 640px;
+    border-radius: 20px;
+    border: 2px solid var(--primary-teal);
+    padding: 28px 24px;
+    box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.1);
+  }
+
+  .title-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .widget-title { font-size: 22px; font-weight: 800; color: var(--text-main); }
+  .widget-desc { font-size: 14px; color: var(--text-sub); margin-bottom: 22px; line-height: 1.5; }
+
+  .form-group { margin-bottom: 18px; }
+  .field-label { font-size: 14px; color: #1e293b; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .sub-guide { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+  .input-box {
+    width: 100%;
+    padding: 13px 18px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-box:focus { border-color: var(--primary-teal); }
+
+  /* 슬라이더 영역 */
+  .range-wrap { margin-top: 6px; }
+  .range-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 10px;
+    border-radius: 5px;
+    background: #e2e8f0;
+    outline: none;
+    margin: 10px 0;
+  }
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-teal);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+  .range-labels { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; font-weight: 600; }
+
+  /* 판정 배너 */
+  .qualify-banner {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .qualify-pass { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .qualify-warn { background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; }
+
+  /* 결과 카드 */
+  .result-card {
+    border: 1.5px solid #99f6e4;
+    background: #f0fdfa;
+    border-radius: 16px;
+    padding: 22px;
+    margin-top: 10px;
+    margin-bottom: 16px;
+  }
+  .res-title { font-size: 14px; color: #0f766e; font-weight: 700; margin-bottom: 4px; }
+  .res-main-amount { font-size: 32px; font-weight: 900; color: #042f2e; margin-bottom: 16px; }
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; padding-top: 14px; border-top: 1px dashed #99f6e4; }
+  .res-item-lbl { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 2px; }
+  .res-item-val { font-size: 16px; font-weight: 800; color: #0f766e; }
+
+  /* 상속 정산 안내 카드 */
+  .inheritance-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+
+  .btn-reset {
+    width: 100%;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 12px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-reset:hover { background: #f8fafc; }
+
+  .footer-note { font-size: 11px; color: #94a3b8; line-height: 1.5; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div class="widget-card">
+  <div class="title-wrap">
+    <span style="font-size: 24px;">🏡</span>
+    <div class="widget-title">내 집 주택연금 예상 수령액 계산기</div>
+  </div>
+  <p class="widget-desc">나이와 집값을 입력하면 2026년 공시 기준 종신지급·정액형 월 수령액과 상속 정산 구조를 실시간으로 계산해 드립니다.</p>
+
+  <!-- 1. 나이 선택 -->
+  <div class="form-group">
+    <div class="field-label">
+      <span>부부 중 연소자(더 젊은 분) 나이</span>
+      <span style="color: var(--primary-teal); font-size: 16px;" id="ageText">만 65세</span>
+    </div>
+    <div class="range-wrap">
+      <input type="range" id="ageRange" class="range-slider" min="55" max="85" value="65">
+      <div class="range-labels">
+        <span>만 55세</span>
+        <span>만 65세</span>
+        <span>만 75세</span>
+        <span>만 85세</span>
+      </div>
+    </div>
+    <div class="sub-guide">※ 가입 신청은 부부 중 1명만 55세 이상이면 가능하지만, 수령액은 더 젊은 분 나이 기준입니다.</div>
+  </div>
+
+  <!-- 2. 주택가격 입력 -->
+  <div class="form-group">
+    <div class="field-label">담보 주택 인정 시세 (원)</div>
+    <input type="text" id="housePriceInput" class="input-box" value="500,000,000">
+    <div class="sub-guide">한국부동산원 시세, KB부동산 시세 또는 감정평가액 기준 (최대 12억 원까지 연금액 반영)</div>
+  </div>
+
+  <!-- 가입 판정 배너 -->
+  <div class="qualify-banner" id="qualifyBanner"></div>
+
+  <!-- 결과 카드 -->
+  <div class="result-card">
+    <div class="res-title">매달 평생 지급받는 월 예상 연금액</div>
+    <div class="res-main-amount" id="resMonthly">약 1,260,000원</div>
+    
+    <div class="res-grid">
+      <div>
+        <div class="res-item-lbl">10년간 누적 수령액</div>
+        <div class="res-item-val" id="res10y">1억 5,120만 원</div>
+      </div>
+      <div>
+        <div class="res-item-lbl">20년간 누적 수령액</div>
+        <div class="res-item-val" id="res20y">3억 240만 원</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상속 정산 안내 -->
+  <div class="inheritance-card">
+    <strong style="color: #042f2e;">👨‍👩‍👧 부부 모두 사망 시 사후 정산 팩트:</strong><br>
+    • <strong>집값이 남은 경우:</strong> [주택 처분액 - 총 연금 수령액·이자]의 <strong>남은 잔여금은 자녀(상속인)에게 100% 현금 상속</strong>됩니다.<br>
+    • <strong>100세 넘게 장수한 경우:</strong> 집값보다 더 많은 연금을 타 가셨더라도 <strong>자녀에게 모자란 빚을 1원도 청구하지 않습니다(비소구 원칙).</strong>
+  </div>
+
+  <button class="btn-reset" onclick="resetForm()">기본값(만 65세, 5억 원)으로 초기화</button>
+  <div class="footer-note">※ 본 계산기는 한국주택금융공사의 일반주택·종신지급방식(정액형) 기준 지급률을 적용한 단순 모의 시뮬레이션입니다. 실제 월지급금은 가입 시점의 공사 정밀 평가 및 금리에 따라 확정됩니다.</div>
+</div>
+
+<script>
+// 연령별 1억 원당 대략적인 월지급금 계수 (2026 공시 테이블 기반 인터폴레이션)
+const ratesPer100M = {
+  55: 153000, 56: 162000, 57: 172000, 58: 183000, 59: 196000,
+  60: 210000, 61: 219000, 62: 228000, 63: 238000, 64: 245000,
+  65: 252000, 66: 263000, 67: 275000, 68: 288000, 69: 297000,
+  70: 308000, 71: 320000, 72: 334000, 73: 349000, 74: 362000,
+  75: 376000, 76: 395000, 77: 415000, 78: 437000, 79: 462000,
+  80: 489000, 81: 520000, 82: 554000, 83: 592000, 84: 635000,
+  85: 683000
+};
+
+const ageRange = document.getElementById('ageRange');
+const ageText = document.getElementById('ageText');
+const housePriceInput = document.getElementById('housePriceInput');
+const qualifyBanner = document.getElementById('qualifyBanner');
+const resMonthly = document.getElementById('resMonthly');
+const res10y = document.getElementById('res10y');
+const res20y = document.getElementById('res20y');
+
+function parseNum(val) {
+  if (!val) return 0;
+  const num = parseFloat(val.toString().replace(/,/g, ''));
+  return isNaN(num) ? 0 : num;
+}
+
+function formatWon(num) {
+  return Math.round(num).toLocaleString();
+}
+
+function calculatePension() {
+  const age = parseInt(ageRange.value);
+  ageText.innerText = `만 ${age}세`;
+
+  const rawPrice = parseNum(housePriceInput.value);
+
+  // 가입 판단 및 상한선 적용 (월지급금 상한 12억 원)
+  const cappedPrice = Math.min(rawPrice, 1200000000);
+
+  // 배너 메시지
+  qualifyBanner.style.display = 'block';
+  if (rawPrice > 1200000000) {
+    qualifyBanner.className = 'qualify-banner qualify-warn';
+    qualifyBanner.innerHTML = `
+      💡 <strong>시세 12억 초과 주택 안내:</strong><br>
+      시세가 12억 원을 넘더라도 <strong>공시가격이 12억 원 이하(시세 약 16~17억 수준)라면 문제없이 가입 가능</strong>합니다. 단, 월 수령액은 상한선인 <strong>12억 원까지만 인정</strong>되어 계산됩니다.
+    `;
+  } else {
+    qualifyBanner.className = 'qualify-banner qualify-pass';
+    qualifyBanner.innerHTML = `
+      ✅ <strong>가입 요건 충족:</strong> 주택가격 및 연령 조건(만 55세 이상)을 충족하여 주택연금 가입이 가능합니다.
+    `;
+  }
+
+  // 월 연금액 계산
+  const rate = ratesPer100M[age] || 252000;
+  const monthly = Math.round((cappedPrice / 100000000) * rate);
+  const total10 = monthly * 12 * 10;
+  const total20 = monthly * 12 * 20;
+
+  resMonthly.innerText = `약 ${formatWon(monthly)}원`;
+  res10y.innerText = `${(total10 / 100000000).toFixed(1)}억 원 (${formatWon(total10)}원)`;
+  res20y.innerText = `${(total20 / 100000000).toFixed(1)}억 원 (${formatWon(total20)}원)`;
+}
+
+function resetForm() {
+  ageRange.value = 65;
+  housePriceInput.value = '500,000,000';
+  calculatePension();
+}
+
+// 콤마 입력 이벤트
+housePriceInput.addEventListener('input', function() {
+  const raw = this.value.replace(/[^0-9]/g, '');
+  if (raw === '') {
+    this.value = '';
+  } else {
+    this.value = parseInt(raw, 10).toLocaleString();
+  }
+  calculatePension();
+});
+
+ageRange.addEventListener('input', calculatePension);
+
+// 초기 계산 실행
+calculatePension();
+</script>
+
+</body>
+</html>
